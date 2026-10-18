@@ -2,6 +2,12 @@
   publish = "public"
   functions = "netlify/functions"
 
+[build.environment]
+  # הקוד משתמש ב-crypto וב-Request כגלובליים (Node 20 ומעלה)
+  NODE_VERSION = "20"
+  # ספריות ה-PDF הן קבצים מכווצים גדולים, אין טעם לסרוק בהם סודות
+  SECRETS_SCAN_OMIT_PATHS = "public/vendor/**"
+
 [[redirects]]
   from = "/admin"
   to = "/admin.html"
