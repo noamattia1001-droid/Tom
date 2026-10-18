@@ -1,7 +1,8 @@
 const $ = (id) => document.getElementById(id);
-const PALETTE = ["#4f46e5", "#0ea5e9", "#12a150", "#f59e0b", "#e11d48", "#9333ea", "#0d9488", "#ea580c", "#64748b", "#84cc16"];
+const PALETTE = ["#15803d", "#22c55e", "#0f766e", "#65a30d", "#166534", "#2dd4bf", "#4d7c0f", "#059669", "#84cc16", "#047857"];
 let pw = sessionStorage.getItem("adminPw") || "";
 let data = null;
+let voters = [];
 let timer = null;
 
 function el(tag, props = {}, ...kids) {
@@ -44,7 +45,10 @@ async function start() {
 }
 
 async function load() {
-  try { data = await api("/data"); render(); } catch (x) { console.warn(x.message); }
+  try {
+    [data, { voters }] = await Promise.all([api("/data"), api("/voters")]);
+    render();
+  } catch (x) { console.warn(x.message); }
 }
 
 /* ---------- טאבים ---------- */
@@ -62,8 +66,8 @@ function avatar(c, cls = "av") {
 }
 
 function render() {
-  const { config, candidates, voters, totalVotes } = data;
-  const voted = voters.filter((v) => v.voted).length;
+  const { config, candidates, totalVotes } = data;
+  const leader = [...candidates].sort((x, y) => y.votes - x.votes)[0];
 
   $("pageTitle").textContent = config.title;
   $("statusPill").textContent = config.open ? "ההצבעה פתוחה" : "ההצבעה סגורה";
@@ -73,11 +77,10 @@ function render() {
 
   $("stats").replaceChildren(
     ...[
-      [voters.length, "תלמידים עם זכות הצבעה"],
-      [voted, "הצביעו"],
-      [pct(voted, voters.length) + "%", "אחוז הצבעה"],
+      [data.voted, "תלמידים הצביעו"],
       [candidates.length, "מועמדים"],
-    ].map(([n, l]) => el("div", { className: "stat" }, el("b", { textContent: String(n) }), el("span", { textContent: l })))
+      [totalVotes && leader ? leader.name : "-", "מוביל כרגע"],
+    ].map(([n, l]) => el("div", { className: "stat" }, el("b", { textContent: String(n), style: { fontSize: String(n).length > 8 ? "1.3rem" : "" } }), el("span", { textContent: l })))
   );
 
   renderBars($("bars"), candidates, totalVotes);
@@ -127,15 +130,14 @@ function renderBars(box, candidates, totalVotes, forPdf = false) {
 
 function renderVoters() {
   const q = $("vFilter").value.trim().toLowerCase();
-  const list = data.voters.filter((v) => !q || [v.name, v.className, v.code].some((s) => (s || "").toLowerCase().includes(q)));
-  $("vCount").textContent = data.voters.length;
+  const list = voters.filter((v) => !q || v.name.toLowerCase().includes(q));
+  $("vCount").textContent = voters.length;
   $("vBody").replaceChildren(...list.map((v) =>
     el("tr", {},
-      el("td", { textContent: v.name }), el("td", { textContent: v.className }),
-      el("td", { className: "code", textContent: v.code }),
-      el("td", {}, el("span", { className: "pill " + (v.voted ? "on" : "warn"), textContent: v.voted ? "הצביע ✓" : "טרם" })),
-      el("td", {}, el("button", { className: "btn small danger", textContent: "הסרה", onclick: async () => {
-        if (confirm(`להסיר את ${v.name}?`)) { await api("/voters/" + v.code, "DELETE"); load(); }
+      el("td", { textContent: v.name }),
+      el("td", { textContent: new Date(v.at).toLocaleString("he-IL", { hour: "2-digit", minute: "2-digit", day: "numeric", month: "numeric" }) }),
+      el("td", {}, el("button", { className: "btn small ghost", textContent: "שחרור", onclick: async () => {
+        if (confirm(`לשחרר את "${v.name}" כך שיוכל להצביע שוב?`)) { await api("/voters/" + v.id, "DELETE"); load(); }
       } }))
     )));
 }
@@ -167,23 +169,10 @@ $("candForm").onsubmit = async (e) => {
   } catch (x) { $("candErr").textContent = x.message; }
 };
 
-/* ---------- תלמידים ---------- */
-$("addVoters").onclick = async () => {
-  $("votersErr").textContent = "";
-  try {
-    const r = await api("/voters", "POST", { text: $("votersText").value });
-    $("votersText").value = "";
-    $("votersErr").textContent = `נוצרו ${r.created.length} קודים ✓`;
-    $("votersErr").style.color = "var(--ok)";
-    load();
-  } catch (x) { $("votersErr").style.color = ""; $("votersErr").textContent = x.message; }
-};
-
-$("csvCodes").onclick = () => {
-  const rows = [["שם", "כיתה", "קוד", "הצביע"], ...data.voters.map((v) => [v.name, v.className, v.code, v.voted ? "כן" : "לא"])];
-  const csv = "﻿" + rows.map((r) => r.map((c) => `"${String(c).replaceAll('"', '""')}"`).join(",")).join("\r\n");
-  const a = el("a", { href: URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })), download: "voters.csv" });
-  a.click();
+$("csvVoters").onclick = () => {
+  const rows = [["שם", "שעה"], ...voters.map((v) => [v.name, new Date(v.at).toLocaleString("he-IL")])];
+  const csv = "\ufeff" + rows.map((r) => r.map((c) => `"${String(c).replaceAll('"', '""')}"`).join(",")).join("\r\n");
+  el("a", { href: URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })), download: "voters.csv" }).click();
 };
 
 /* ---------- הגדרות ---------- */
@@ -225,24 +214,23 @@ $("pdfReport").onclick = async (ev) => {
   const btn = ev.currentTarget; btn.disabled = true;
   try {
     await load();
-    const { config, candidates, voters, totalVotes } = data;
-    const voted = voters.filter((v) => v.voted).length;
+    const { config, candidates, totalVotes } = data;
     const sorted = [...candidates].sort((a, b) => b.votes - a.votes);
     const tied = sorted.length > 1 && sorted[0].votes === sorted[1].votes;
     const page = newPage();
-    const stat = (n, l) => el("div", { style: { flex: "1", background: "#f4f6fb", borderRadius: "14px", padding: "14px 16px" } },
+    const stat = (n, l) => el("div", { style: { flex: "1", background: "#f3faf5", border: "1px solid #d9ebdf", borderRadius: "14px", padding: "14px 16px" } },
       el("div", { textContent: String(n), style: { fontSize: "28px", fontWeight: "800" } }),
       el("div", { textContent: l, style: { color: "#6b7491", fontSize: "14px" } }));
 
     page.append(
-      el("div", { textContent: "🗳️ דוח תוצאות הבחירות", style: { color: "#4f46e5", fontWeight: "700", fontSize: "16px" } }),
-      el("h1", { textContent: config.title, style: { fontSize: "34px", margin: "4px 0 2px" } }),
+      el("div", { textContent: "🗳️ דוח תוצאות הבחירות", style: { color: "#15803d", fontWeight: "700", fontSize: "16px" } }),
+      el("h1", { textContent: config.title, style: { fontSize: "34px", margin: "4px 0 2px", color: "#15803d" } }),
       el("div", { textContent: "תאריך הפקה: " + new Date().toLocaleDateString("he-IL", { day: "numeric", month: "long", year: "numeric" }), style: { color: "#6b7491", marginBottom: "20px" } }),
       el("div", { style: { display: "flex", gap: "12px", marginBottom: "22px" } },
-        stat(voters.length, "בעלי זכות בחירה"), stat(voted, "הצביעו"), stat(pct(voted, voters.length) + "%", "אחוז הצבעה")),
+        stat(data.voted, "תלמידים הצביעו"), stat(candidates.length, "מועמדים"), stat(totalVotes, "קולות שנספרו")),
     );
     if (sorted.length && totalVotes > 0) {
-      page.append(el("div", { style: { background: "#eef0ff", border: "2px solid #4f46e5", borderRadius: "16px", padding: "14px 18px", marginBottom: "22px", fontSize: "20px", fontWeight: "800" } },
+      page.append(el("div", { style: { background: "#e7f6ec", border: "2px solid #15803d", borderRadius: "16px", padding: "14px 18px", marginBottom: "22px", fontSize: "20px", fontWeight: "800" } },
         tied ? "🤝 תיקו בין המובילים (" + sorted.filter((c) => c.votes === sorted[0].votes).map((c) => c.name).join(", ") + ")"
              : `🏆 המנצח/ת: ${sorted[0].name} עם ${sorted[0].votes} קולות (${pct(sorted[0].votes, totalVotes)}%)`));
     }
@@ -262,36 +250,10 @@ $("pdfReport").onclick = async (ev) => {
           el("div", { style: { width: (top ? (c.votes / top) * 100 : 0) + "%", height: "100%", background: color, borderRadius: "10px" } })),
         el("div", { textContent: `${c.votes} (${pct(c.votes, totalVotes)}%)`, style: { width: "90px", fontWeight: "800", direction: "ltr", textAlign: "left" } })));
     }
-    page.append(el("div", { textContent: "ההצבעה הייתה חשאית: כל תלמיד הצביע פעם אחת באמצעות קוד אישי, והמערכת אינה שומרת קשר בין התלמיד לבחירתו.",
+    page.append(el("div", { textContent: "ההצבעה הייתה חשאית: כל תלמיד הצביע פעם אחת (זיהוי לפי שם, עם בדיקת כפילויות), והמערכת אינה שומרת קשר בין התלמיד לבחירתו.",
       style: { position: "absolute", bottom: "36px", right: "48px", left: "48px", color: "#6b7491", fontSize: "13px", borderTop: "1px solid #e5e7eb", paddingTop: "10px" } }));
     await pagesToPdf([page], "election-results.pdf");
   } catch (x) { alert("שגיאה ביצירת PDF: " + x.message); }
-  btn.disabled = false;
-};
-
-$("pdfCodes").onclick = async (ev) => {
-  const btn = ev.currentTarget; btn.disabled = true;
-  try {
-    const list = data.voters;
-    if (!list.length) throw new Error("אין תלמידים. צרו קודים קודם.");
-    const PER = 12, pages = [];
-    for (let i = 0; i < list.length; i += PER) {
-      const page = newPage();
-      page.style.padding = "28px";
-      const grid = el("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gridAutoRows: "1fr", gap: "10px", height: "100%" } });
-      for (const v of list.slice(i, i + PER)) {
-        grid.append(el("div", { style: { border: "2px dashed #9aa3c7", borderRadius: "14px", padding: "12px 14px", textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center", gap: "4px" } },
-          el("div", { textContent: data.config.title, style: { fontSize: "13px", color: "#6b7491", fontWeight: "700" } }),
-          el("div", { textContent: v.name + (v.className ? " · " + v.className : ""), style: { fontSize: "17px", fontWeight: "800" } }),
-          el("div", { textContent: v.code, style: { fontFamily: "Consolas, monospace", fontSize: "34px", fontWeight: "800", letterSpacing: "6px", direction: "ltr", color: "#4f46e5" } }),
-          el("div", { style: { fontSize: "12px", color: "#6b7491" } }, "כתובת ההצבעה: ", el("span", { textContent: location.host, style: { direction: "ltr", unicodeBidi: "isolate", fontWeight: "700" } })),
-          el("div", { textContent: "הקוד אישי - מצביעים פעם אחת בלבד", style: { fontSize: "11px", color: "#9aa3c7" } })));
-      }
-      page.append(grid);
-      pages.push(page);
-    }
-    await pagesToPdf(pages, "voting-codes.pdf");
-  } catch (x) { alert(x.message); }
   btn.disabled = false;
 };
 

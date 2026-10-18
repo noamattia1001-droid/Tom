@@ -9,21 +9,22 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="band"></div>
 <div class="wrap">
   <header class="hero">
     <div style="font-size:3rem">🗳️</div>
     <h1 id="title">בחירות לתלמידים</h1>
-    <p class="muted" id="sub">הקול שלך חשוב! הצבעה אחת לכל תלמיד, חשאית ובלי שמות.</p>
+    <p class="muted" id="sub">הקול שלך חשוב! כל תלמיד מצביע פעם אחת, וההצבעה חשאית.</p>
   </header>
 
-  <!-- שלב 1: כניסה עם קוד אישי -->
+  <!-- שלב 1: הקלדת שם -->
   <section id="loginView" class="card login">
-    <h2>הכניסו את הקוד האישי שלכם</h2>
-    <p class="muted">את הקוד קיבלתם מהמורה.</p>
+    <h2>מה השם שלך?</h2>
+    <p class="muted">כתבו שם פרטי ושם משפחה. אפשר להצביע פעם אחת בלבד.</p>
     <form id="loginForm">
-      <input id="code" class="code-input" type="text" maxlength="8" autocomplete="off" autocapitalize="characters" placeholder="______" aria-label="קוד אישי">
+      <input id="name" class="name-input" type="text" maxlength="40" autocomplete="name" placeholder="שם פרטי ושם משפחה" aria-label="שם מלא">
       <p class="err" id="loginErr"></p>
-      <button class="btn" style="width:100%">כניסה להצבעה</button>
+      <button class="btn" style="width:100%">המשך להצבעה</button>
     </form>
   </section>
 

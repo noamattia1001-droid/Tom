@@ -1,6 +1,6 @@
 const $ = (id) => document.getElementById(id);
 let state = { open: false, candidates: [], title: "" };
-let session = null; // { code, name }
+let session = null; // { name }
 let picked = null;
 
 const views = ["loginView", "voteView", "doneView", "closedView"];
@@ -51,11 +51,10 @@ $("loginForm").onsubmit = async (e) => {
   $("loginErr").textContent = "";
   await refresh();
   try {
-    const code = $("code").value;
-    const r = await api("/login", { method: "POST", body: JSON.stringify({ code }) });
-    session = { code, name: r.name };
+    const r = await api("/check", { method: "POST", body: JSON.stringify({ name: $("name").value }) });
+    session = { name: r.name };
     $("who").textContent = r.name;
-    if (r.voted) { $("doneTitle").textContent = "כבר הצבעת"; $("doneText").textContent = "אפשר להצביע רק פעם אחת. תודה!"; return show("doneView"); }
+    if (r.voted) { $("doneTitle").textContent = "כבר הצבעת"; $("doneText").textContent = "השם הזה כבר הצביע, אפשר להצביע רק פעם אחת. תודה!"; session = null; return show("doneView"); }
     if (!state.open) return show("closedView");
     renderCands();
     show("voteView");
@@ -75,7 +74,7 @@ $("no").onclick = () => $("confirm").classList.add("hidden");
 $("yes").onclick = async () => {
   $("yes").disabled = true;
   try {
-    await api("/vote", { method: "POST", body: JSON.stringify({ code: session.code, candidateId: picked.id }) });
+    await api("/vote", { method: "POST", body: JSON.stringify({ name: session.name, candidateId: picked.id }) });
     $("confirm").classList.add("hidden");
     show("doneView");
     session = null;
