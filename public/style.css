@@ -90,3 +90,14 @@ th { color: var(--muted); font-size: .85rem; position: sticky; top: 0; backgroun
   .bar-row { grid-template-columns: 44px 1fr 70px; }
   .bar-row .bar-track { grid-column: 1 / -1; }
 }
+
+/* קרדיט יוצר: לוגו YOURZON בצבעי המותג */
+.made-by { text-align: center; padding: 18px 16px 28px; color: var(--muted); font-size: .95rem; display: flex; justify-content: center; align-items: baseline; gap: 8px; }
+.yz-logo {
+  font-weight: 900; font-size: 1.45rem; letter-spacing: -.03em; line-height: 1; text-decoration: none; direction: ltr;
+  background-image: linear-gradient(100deg, #D11430 0%, #C0112C 16%, #7A1E46 33%, #1A2340 50%, #7A1E46 67%, #C0112C 84%, #D11430 100%);
+  background-size: 200% auto; -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.yz-logo:hover { opacity: .85; }
+/* מסתיר את חלונית Netlify Drawer אם היא מוזרקת (ברירת מחדל מכוסה בהגדרות Netlify) */
+iframe[src^="https://app.netlify.com"] { display: none !important; }

@@ -250,7 +250,7 @@ $("pdfReport").onclick = async (ev) => {
           el("div", { style: { width: (top ? (c.votes / top) * 100 : 0) + "%", height: "100%", background: color, borderRadius: "10px" } })),
         el("div", { textContent: `${c.votes} (${pct(c.votes, totalVotes)}%)`, style: { width: "90px", fontWeight: "800", direction: "ltr", textAlign: "left" } })));
     }
-    page.append(el("div", { textContent: "ההצבעה הייתה חשאית: כל תלמיד הצביע פעם אחת (זיהוי לפי שם, עם בדיקת כפילויות), והמערכת אינה שומרת קשר בין התלמיד לבחירתו.",
+    page.append(el("div", { textContent: "ההצבעה הייתה חשאית: כל תלמיד הצביע פעם אחת (זיהוי לפי שם, עם בדיקת כפילויות), והמערכת אינה שומרת קשר בין התלמיד לבחירתו. נוצר על ידי YOURZON.",
       style: { position: "absolute", bottom: "36px", right: "48px", left: "48px", color: "#6b7491", fontSize: "13px", borderTop: "1px solid #e5e7eb", paddingTop: "10px" } }));
     await pagesToPdf([page], "election-results.pdf");
   } catch (x) { alert("שגיאה ביצירת PDF: " + x.message); }
