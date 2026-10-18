@@ -47,7 +47,7 @@
     <div class="tabs" id="tabs">
       <button class="tab active" data-tab="summary">📊 תוצאות</button>
       <button class="tab" data-tab="candidates">🧑‍🎓 מועמדים</button>
-      <button class="tab" data-tab="voters">✅ מי הצביע</button>
+      <button class="tab" data-tab="voters">🪪 מצביעים</button>
       <button class="tab" data-tab="settings">⚙️ הגדרות</button>
     </div>
 
@@ -75,18 +75,33 @@
       <div class="card"><h2>המועמדים</h2><div id="candList"></div></div>
     </section>
 
-    <!-- מי הצביע -->
+    <!-- מצביעים -->
     <section data-pane="voters" class="hidden">
       <div class="card">
-        <h2>מי כבר הצביע (<span id="vCount"></span>)</h2>
-        <p class="muted">כל תלמיד מקליד את שמו ומצביע פעם אחת. המערכת מזהה כפילויות גם אם כותבים בסדר שונה, עם רווחים מיותרים או בלי ניקוד.
-        ההצבעה חשאית: הרשימה מראה רק <b>שמות</b>, בלי המועמד שנבחר.</p>
+        <h2>הוספת תלמיד שיכול להצביע</h2>
+        <p class="muted">רק תלמיד שנמצא ברשימה יכול להצביע, ורק פעם אחת. התלמיד נכנס עם <b>תעודת הזהות</b> שלו.
+        המערכת לא שומרת את התעודה בגלוי (רק צופן), ובדשבורד מוצגות רק 3 הספרות האחרונות. ההצבעה חשאית: אין קשר בין התלמיד לבחירה.</p>
+        <form id="stuForm" class="row">
+          <input id="stuName" type="text" class="grow" placeholder="שם התלמיד" required>
+          <input id="stuId" type="text" inputmode="numeric" maxlength="11" placeholder="תעודת זהות" dir="ltr" style="max-width:190px" required>
+          <button class="btn">הוספה</button>
+        </form>
+        <details style="margin-top:12px">
+          <summary style="cursor:pointer;font-weight:700;color:var(--brand)">הוספת רשימה שלמה (הדבקה מאקסל)</summary>
+          <p class="muted">שורה לכל תלמיד: <span class="code">שם, תעודת זהות</span> (או הפוך).</p>
+          <textarea id="stuText" rows="6" placeholder="דנה כהן, 100000074&#10;יוסי לוי, 100000629"></textarea>
+          <button class="btn" id="stuBulk" style="margin-top:8px">הוספת הרשימה</button>
+        </details>
+        <p class="err" id="stuMsg" style="white-space:pre-line"></p>
+      </div>
+      <div class="card">
+        <h2>רשימת המצביעים (<span id="vCount"></span>)</h2>
         <div class="row" style="margin-bottom:10px">
-          <input id="vFilter" type="text" class="grow" placeholder="חיפוש שם">
+          <input id="vFilter" type="text" class="grow" placeholder="חיפוש לפי שם או 3 ספרות אחרונות">
           <button class="btn ghost" id="csvVoters">⬇️ הורדת רשימה (CSV)</button>
         </div>
-        <div class="tablewrap"><table><thead><tr><th>שם</th><th>שעה</th><th></th></tr></thead><tbody id="vBody"></tbody></table></div>
-        <p class="muted" style="margin-bottom:0">"שחרור" מאפשר לתלמיד להצביע שוב (למשל כששני תלמידים עם אותו שם). הקול שכבר נספר נשאר.</p>
+        <div class="tablewrap"><table><thead><tr><th>שם</th><th>ת.ז.</th><th>הצביע?</th><th></th></tr></thead><tbody id="vBody"></tbody></table></div>
+        <p class="muted" style="margin-bottom:0">הסרת תלמיד מונעת ממנו להצביע. אם כבר הצביע, הקול נשאר.</p>
       </div>
     </section>
 
@@ -107,7 +122,7 @@
       </div>
       <div class="card" style="border-color:var(--bad)">
         <h2>אזור מסוכן</h2>
-        <p class="muted">איפוס מוחק את כל הקולות ורשימת מי שהצביע, וכל התלמידים יוכלו להצביע מחדש (המועמדים נשארים).</p>
+        <p class="muted">איפוס מוחק את כל הקולות וסימוני "הצביע", וכל התלמידים ברשימה יוכלו להצביע מחדש (המועמדים ורשימת המצביעים נשארים).</p>
         <button class="btn danger" id="reset">איפוס כל הקולות</button>
       </div>
     </section>

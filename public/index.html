@@ -21,10 +21,10 @@
 
   <!-- שלב 1: הקלדת שם -->
   <section id="loginView" class="card login">
-    <h2>מה השם שלך?</h2>
-    <p class="muted">כתבו שם פרטי ושם משפחה. אפשר להצביע פעם אחת בלבד.</p>
+    <h2>כניסה להצבעה</h2>
+    <p class="muted">הקלידו את מספר תעודת הזהות שלכם. אפשר להצביע פעם אחת בלבד.</p>
     <form id="loginForm">
-      <input id="name" class="name-input" type="text" maxlength="40" autocomplete="name" placeholder="שם פרטי ושם משפחה" aria-label="שם מלא">
+      <input id="idnum" class="name-input" type="text" inputmode="numeric" maxlength="11" autocomplete="off" placeholder="תעודת זהות" aria-label="תעודת זהות" dir="ltr">
       <p class="err" id="loginErr"></p>
       <button class="btn" style="width:100%">המשך להצבעה</button>
     </form>
@@ -33,7 +33,7 @@
   <!-- שלב 2: בחירת מועמד -->
   <section id="voteView" class="hidden">
     <div class="card" style="text-align:center">
-      <h2>שלום <span id="who"></span> 👋</h2>
+      <h2>תעודת הזהות אומתה ✅</h2>
       <p class="muted" id="voteHint">לחצו על המועמד/ת שאתם רוצים לבחור.</p>
     </div>
     <div class="cands" id="cands"></div>

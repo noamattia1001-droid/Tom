@@ -2,7 +2,7 @@ const $ = (id) => document.getElementById(id);
 const PALETTE = ["#15803d", "#22c55e", "#0f766e", "#65a30d", "#166534", "#2dd4bf", "#4d7c0f", "#059669", "#84cc16", "#047857"];
 let pw = sessionStorage.getItem("adminPw") || "";
 let data = null;
-let voters = [];
+let students = [];
 let timer = null;
 
 function el(tag, props = {}, ...kids) {
@@ -46,7 +46,9 @@ async function start() {
 
 async function load() {
   try {
-    [data, { voters }] = await Promise.all([api("/data"), api("/voters")]);
+    let list;
+    [data, list] = await Promise.all([api("/data"), api("/students")]);
+    students = list.students;
     render();
   } catch (x) { console.warn(x.message); }
 }
@@ -77,7 +79,8 @@ function render() {
 
   $("stats").replaceChildren(
     ...[
-      [data.voted, "תלמידים הצביעו"],
+      [`${data.voted} / ${data.registered}`, "הצביעו מתוך הרשומים"],
+      [pct(data.voted, data.registered) + "%", "אחוז הצבעה"],
       [candidates.length, "מועמדים"],
       [totalVotes && leader ? leader.name : "-", "מוביל כרגע"],
     ].map(([n, l]) => el("div", { className: "stat" }, el("b", { textContent: String(n), style: { fontSize: String(n).length > 8 ? "1.3rem" : "" } }), el("span", { textContent: l })))
@@ -130,14 +133,15 @@ function renderBars(box, candidates, totalVotes, forPdf = false) {
 
 function renderVoters() {
   const q = $("vFilter").value.trim().toLowerCase();
-  const list = voters.filter((v) => !q || v.name.toLowerCase().includes(q));
-  $("vCount").textContent = voters.length;
+  const list = students.filter((v) => !q || v.name.toLowerCase().includes(q) || v.last3.includes(q));
+  $("vCount").textContent = students.length;
   $("vBody").replaceChildren(...list.map((v) =>
     el("tr", {},
       el("td", { textContent: v.name }),
-      el("td", { textContent: new Date(v.at).toLocaleString("he-IL", { hour: "2-digit", minute: "2-digit", day: "numeric", month: "numeric" }) }),
-      el("td", {}, el("button", { className: "btn small ghost", textContent: "שחרור", onclick: async () => {
-        if (confirm(`לשחרר את "${v.name}" כך שיוכל להצביע שוב?`)) { await api("/voters/" + v.id, "DELETE"); load(); }
+      el("td", { className: "code", textContent: "•••••" + v.last3 }),
+      el("td", {}, el("span", { className: "pill " + (v.voted ? "on" : "warn"), textContent: v.voted ? "הצביע ✓" : "טרם" })),
+      el("td", {}, el("button", { className: "btn small danger", textContent: "הסרה", onclick: async () => {
+        if (confirm(`להסיר את ${v.name} מרשימת המצביעים?`)) { await api("/students/" + v.id, "DELETE"); load(); }
       } }))
     )));
 }
@@ -169,8 +173,32 @@ $("candForm").onsubmit = async (e) => {
   } catch (x) { $("candErr").textContent = x.message; }
 };
 
+function showStuResult(r) {
+  const lines = [];
+  if (r.added) lines.push(`נוספו ${r.added} תלמידים ✓`);
+  if (r.duplicates?.length) lines.push(`כבר ברשימה (תעודת זהות כפולה): ${r.duplicates.join(", ")}`);
+  for (const x of r.invalid || []) lines.push(`נדחה: "${x.line}" - ${x.reason}`);
+  $("stuMsg").style.color = r.added && !r.duplicates?.length && !r.invalid?.length ? "var(--ok)" : "";
+  $("stuMsg").textContent = lines.join("\n") || "לא נוסף אף תלמיד.";
+}
+
+async function addStudents(payload) {
+  try { showStuResult(await api("/students", "POST", payload)); load(); }
+  catch (x) { $("stuMsg").style.color = ""; $("stuMsg").textContent = x.message; }
+}
+
+$("stuForm").onsubmit = async (e) => {
+  e.preventDefault();
+  await addStudents({ name: $("stuName").value, idNumber: $("stuId").value });
+  if ($("stuMsg").textContent.startsWith("נוספו")) { $("stuName").value = ""; $("stuId").value = ""; $("stuName").focus(); }
+};
+$("stuBulk").onclick = async () => {
+  await addStudents({ text: $("stuText").value });
+  if ($("stuMsg").textContent.startsWith("נוספו")) $("stuText").value = "";
+};
+
 $("csvVoters").onclick = () => {
-  const rows = [["שם", "שעה"], ...voters.map((v) => [v.name, new Date(v.at).toLocaleString("he-IL")])];
+  const rows = [["שם", "3 ספרות אחרונות", "הצביע"], ...students.map((v) => [v.name, v.last3, v.voted ? "כן" : "לא"])];
   const csv = "\ufeff" + rows.map((r) => r.map((c) => `"${String(c).replaceAll('"', '""')}"`).join(",")).join("\r\n");
   el("a", { href: URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })), download: "voters.csv" }).click();
 };
@@ -227,7 +255,7 @@ $("pdfReport").onclick = async (ev) => {
       el("h1", { textContent: config.title, style: { fontSize: "34px", margin: "4px 0 2px", color: "#15803d" } }),
       el("div", { textContent: "תאריך הפקה: " + new Date().toLocaleDateString("he-IL", { day: "numeric", month: "long", year: "numeric" }), style: { color: "#6b7491", marginBottom: "20px" } }),
       el("div", { style: { display: "flex", gap: "12px", marginBottom: "22px" } },
-        stat(data.voted, "תלמידים הצביעו"), stat(candidates.length, "מועמדים"), stat(totalVotes, "קולות שנספרו")),
+        stat(data.registered, "בעלי זכות בחירה"), stat(data.voted, "הצביעו"), stat(pct(data.voted, data.registered) + "%", "אחוז הצבעה")),
     );
     if (sorted.length && totalVotes > 0) {
       page.append(el("div", { style: { background: "#e7f6ec", border: "2px solid #15803d", borderRadius: "16px", padding: "14px 18px", marginBottom: "22px", fontSize: "20px", fontWeight: "800" } },
@@ -250,7 +278,7 @@ $("pdfReport").onclick = async (ev) => {
           el("div", { style: { width: (top ? (c.votes / top) * 100 : 0) + "%", height: "100%", background: color, borderRadius: "10px" } })),
         el("div", { textContent: `${c.votes} (${pct(c.votes, totalVotes)}%)`, style: { width: "90px", fontWeight: "800", direction: "ltr", textAlign: "left" } })));
     }
-    page.append(el("div", { textContent: "ההצבעה הייתה חשאית: כל תלמיד הצביע פעם אחת (זיהוי לפי שם, עם בדיקת כפילויות), והמערכת אינה שומרת קשר בין התלמיד לבחירתו. נוצר על ידי YOURZON.",
+    page.append(el("div", { textContent: "ההצבעה הייתה חשאית: כל תלמיד הצביע פעם אחת (זיהוי לפי תעודת זהות), והמערכת אינה שומרת קשר בין התלמיד לבחירתו. נוצר על ידי YOURZON.",
       style: { position: "absolute", bottom: "36px", right: "48px", left: "48px", color: "#6b7491", fontSize: "13px", borderTop: "1px solid #e5e7eb", paddingTop: "10px" } }));
     await pagesToPdf([page], "election-results.pdf");
   } catch (x) { alert("שגיאה ביצירת PDF: " + x.message); }
