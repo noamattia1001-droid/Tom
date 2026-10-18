@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>דשבורד מורים - בחירות</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;800&display=swap">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E🗳️%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+
+  <section id="loginView" class="card login" style="margin-top:60px">
+    <div style="font-size:3rem">🔐</div>
+    <h2>כניסת מורים</h2>
+    <form id="loginForm">
+      <input id="pw" type="password" placeholder="סיסמת מנהל" autocomplete="current-password">
+      <p class="err" id="loginErr"></p>
+      <button class="btn" style="width:100%">כניסה</button>
+    </form>
+  </section>
+
+  <main id="app" class="hidden">
+    <div class="top">
+      <div>
+        <h1 id="pageTitle">דשבורד בחירות</h1>
+        <span class="pill" id="statusPill"></span>
+        <span class="muted" id="updated"></span>
+      </div>
+      <div class="row">
+        <button class="btn ok" id="pdfReport">📄 הורדת דוח PDF להורים</button>
+        <button class="btn ghost" id="logout">יציאה</button>
+      </div>
+    </div>
+
+    <div class="card hidden" id="pwWarn" style="border-color:var(--warn)">
+      <b>⚠️ הסיסמה היא ברירת המחדל (admin123).</b>
+      <span class="muted">הגדירו משתנה סביבה בשם ADMIN_PASSWORD באתר (Netlify → Site configuration → Environment variables) כדי להגן על הדשבורד.</span>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-tab="summary">📊 תוצאות</button>
+      <button class="tab" data-tab="candidates">🧑‍🎓 מועמדים</button>
+      <button class="tab" data-tab="voters">🎟️ תלמידים וקודים</button>
+      <button class="tab" data-tab="settings">⚙️ הגדרות</button>
+    </div>
+
+    <!-- תוצאות -->
+    <section data-pane="summary">
+      <div class="stats" id="stats"></div>
+      <div class="card">
+        <h2>כמה קולות קיבל כל מועמד</h2>
+        <div class="bars" id="bars"></div>
+      </div>
+    </section>
+
+    <!-- מועמדים -->
+    <section data-pane="candidates" class="hidden">
+      <div class="card">
+        <h2>הוספת מועמד</h2>
+        <p class="muted">המועמד יופיע מיד באתר התלמידים (תוך כמה שניות).</p>
+        <form id="candForm" class="row">
+          <input id="candName" type="text" class="grow" placeholder="שם המועמד" required>
+          <input id="candPhoto" type="file" accept="image/*">
+          <button class="btn">הוספה</button>
+        </form>
+        <p class="err" id="candErr"></p>
+      </div>
+      <div class="card"><h2>המועמדים</h2><div id="candList"></div></div>
+    </section>
+
+    <!-- תלמידים -->
+    <section data-pane="voters" class="hidden">
+      <div class="card">
+        <h2>זיהוי תלמידים - קוד אישי לכל תלמיד</h2>
+        <p class="muted">כל תלמיד מקבל קוד ייחודי בן 6 תווים. הקוד עובד פעם אחת בלבד, ככה כל תלמיד מצביע פעם אחת ואף אחד לא יכול להצביע במקום אחר.
+        ההצבעה חשאית: המערכת שומרת רק <b>מי כבר הצביע</b> ו<b>כמה קולות קיבל כל מועמד</b>, בלי קשר ביניהם.</p>
+        <p><b>הדביקו רשימה</b> - שורה לכל תלמיד, בפורמט: <span class="code">שם, כיתה</span> (אפשר להעתיק ישירות מאקסל):</p>
+        <textarea id="votersText" rows="6" placeholder="דנה כהן, ז1&#10;יוסי לוי, ז1&#10;נועה מזרחי, ח2"></textarea>
+        <div class="row" style="margin-top:10px">
+          <button class="btn" id="addVoters">יצירת קודים</button>
+          <button class="btn ghost" id="pdfCodes">🖨️ הורדת PDF פתקי קודים (להדפסה וחיתוך)</button>
+          <button class="btn ghost" id="csvCodes">⬇️ CSV</button>
+        </div>
+        <p class="err" id="votersErr"></p>
+      </div>
+      <div class="card">
+        <h2>רשימת התלמידים (<span id="vCount"></span>)</h2>
+        <input id="vFilter" type="text" placeholder="חיפוש לפי שם / כיתה / קוד" style="margin-bottom:10px">
+        <div class="tablewrap"><table><thead><tr><th>שם</th><th>כיתה</th><th>קוד</th><th>הצביע?</th><th></th></tr></thead><tbody id="vBody"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- הגדרות -->
+    <section data-pane="settings" class="hidden">
+      <div class="card">
+        <h2>הגדרות הבחירות</h2>
+        <label>כותרת הבחירות<input id="cfgTitle" type="text"></label>
+        <div class="row" style="margin-top:12px">
+          <button class="btn" id="saveTitle">שמירת כותרת</button>
+          <button class="btn ok" id="toggleOpen"></button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>קישורים</h2>
+        <p>אתר התלמידים: <a id="linkStudents" class="code" target="_blank"></a></p>
+        <p>דשבורד מורים: <a id="linkAdmin" class="code" target="_blank"></a></p>
+      </div>
+      <div class="card" style="border-color:var(--bad)">
+        <h2>אזור מסוכן</h2>
+        <p class="muted">איפוס מוחק את כל הקולות ומאפשר לכל התלמידים להצביע מחדש (המועמדים והקודים נשארים).</p>
+        <button class="btn danger" id="reset">איפוס כל הקולות</button>
+      </div>
+    </section>
+  </main>
+</div>
+<div id="pdfStage" style="position:fixed;left:-10000px;top:0"></div>
+<script src="vendor/html2canvas.min.js"></script>
+<script src="vendor/jspdf.umd.min.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

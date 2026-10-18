@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>הצבעה לבחירות התלמידים</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;800&display=swap">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E🗳️%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div style="font-size:3rem">🗳️</div>
+    <h1 id="title">בחירות לתלמידים</h1>
+    <p class="muted" id="sub">הקול שלך חשוב! הצבעה אחת לכל תלמיד, חשאית ובלי שמות.</p>
+  </header>
+
+  <!-- שלב 1: כניסה עם קוד אישי -->
+  <section id="loginView" class="card login">
+    <h2>הכניסו את הקוד האישי שלכם</h2>
+    <p class="muted">את הקוד קיבלתם מהמורה.</p>
+    <form id="loginForm">
+      <input id="code" class="code-input" type="text" maxlength="8" autocomplete="off" autocapitalize="characters" placeholder="______" aria-label="קוד אישי">
+      <p class="err" id="loginErr"></p>
+      <button class="btn" style="width:100%">כניסה להצבעה</button>
+    </form>
+  </section>
+
+  <!-- שלב 2: בחירת מועמד -->
+  <section id="voteView" class="hidden">
+    <div class="card" style="text-align:center">
+      <h2>שלום <span id="who"></span> 👋</h2>
+      <p class="muted" id="voteHint">לחצו על המועמד/ת שאתם רוצים לבחור.</p>
+    </div>
+    <div class="cands" id="cands"></div>
+  </section>
+
+  <!-- שלב 3: סיום -->
+  <section id="doneView" class="card login hidden">
+    <div class="big-ok">✅</div>
+    <h2 id="doneTitle">תודה שהצבעת!</h2>
+    <p class="muted" id="doneText">ההצבעה שלך נקלטה. אפשר לסגור את הדף.</p>
+  </section>
+
+  <section id="closedView" class="card login hidden">
+    <div class="big-ok">⏳</div>
+    <h2>ההצבעה סגורה כרגע</h2>
+    <p class="muted">המורה יפתח את ההצבעה בקרוב. נסו שוב מאוחר יותר.</p>
+  </section>
+</div>
+
+<div class="modal hidden" id="confirm">
+  <div class="card box">
+    <h2>לאשר את ההצבעה?</h2>
+    <img id="cImg" alt="">
+    <h3 id="cName"></h3>
+    <p class="muted">אי אפשר לשנות אחרי האישור.</p>
+    <div class="row" style="justify-content:center">
+      <button class="btn ok" id="yes">כן, אני מצביע/ה</button>
+      <button class="btn ghost" id="no">חזרה</button>
+    </div>
+    <p class="err" id="voteErr"></p>
+  </div>
+</div>
+<script src="student.js"></script>
+</body>
+</html>
