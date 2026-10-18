@@ -1,4 +1,4 @@
-# 🗳️ מערכת בחירות לתלמידים (ירוק-לבן)
+# 🗳️ תום כפר נוער – מערכת בחירות לתלמידים
 
 - **אתר תלמידים** (`/`) – התלמיד מקליד שם פרטי ושם משפחה, בוחר מועמד ומצביע פעם אחת.
 - **דשבורד מורים** (`/admin`) – גרף קולות חי, הוספת מועמדים (שם + תמונה, מתעדכן מיד באתר התלמידים), רשימת מי הצביע, פתיחה/סגירה של ההצבעה.
@@ -22,10 +22,11 @@
 
 1. היכנסו ל-https://app.netlify.com → **Add new site → Import an existing project → GitHub** ובחרו את הריפו הזה (ואת הבראנץ' עם הקוד).
 2. הגדרות בנייה: להשאיר ברירת מחדל (הכול כבר ב-`netlify.toml`). לחצו **Deploy**.
-3. **חשוב:** Site configuration → Environment variables → הוסיפו `ADMIN_PASSWORD` עם סיסמה למורים, ואז Deploys → Trigger deploy.
-4. הקישורים:
-   - תלמידים: `https://<שם-האתר>.netlify.app/`
-   - מורים: `https://<שם-האתר>.netlify.app/admin`
+3. **שם האתר:** Site configuration → Change site name → `tom-kfar-noar` (אם תפוס, אפשר `tom-kfar-noar-elections`).
+4. **חשוב:** Site configuration → Environment variables → הוסיפו `ADMIN_PASSWORD` עם סיסמה למורים, ואז Deploys → Trigger deploy.
+5. הקישורים:
+   - תלמידים: `https://tom-kfar-noar.netlify.app/`
+   - מורים: `https://tom-kfar-noar.netlify.app/admin`
 
 > Vercel / GitHub Pages: האתר דורש שרת לשמירת הקולות, ולכן GitHub Pages (סטטי בלבד) לא מתאים.
 > ב-Vercel צריך להחליף את שכבת האחסון (`netlify/functions/api.mjs`) ל-Vercel KV/Upstash; הליבה ב-`lib/api.mjs` לא תלויה באחסון.

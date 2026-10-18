@@ -1,9 +1,9 @@
 {
-  "name": "school-elections",
+  "name": "tom-kfar-noar-elections",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "מערכת בחירות לתלמידים - אתר הצבעה, דשבורד למורים, דוח PDF להורים",
+  "description": "תום כפר נוער - מערכת בחירות לתלמידים - אתר הצבעה, דשבורד למורים, דוח PDF להורים",
   "scripts": {
     "dev": "node scripts/dev-server.mjs",
     "test": "node scripts/test.mjs"

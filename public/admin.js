@@ -223,7 +223,7 @@ $("pdfReport").onclick = async (ev) => {
       el("div", { textContent: l, style: { color: "#6b7491", fontSize: "14px" } }));
 
     page.append(
-      el("div", { textContent: "🗳️ דוח תוצאות הבחירות", style: { color: "#15803d", fontWeight: "700", fontSize: "16px" } }),
+      el("div", { textContent: "תום כפר נוער · דוח תוצאות הבחירות", style: { color: "#15803d", fontWeight: "700", fontSize: "16px" } }),
       el("h1", { textContent: config.title, style: { fontSize: "34px", margin: "4px 0 2px", color: "#15803d" } }),
       el("div", { textContent: "תאריך הפקה: " + new Date().toLocaleDateString("he-IL", { day: "numeric", month: "long", year: "numeric" }), style: { color: "#6b7491", marginBottom: "20px" } }),
       el("div", { style: { display: "flex", gap: "12px", marginBottom: "22px" } },

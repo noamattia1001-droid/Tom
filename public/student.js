@@ -39,7 +39,7 @@ async function refresh() {
     refresh.last = sig;
     state = s;
     $("title").textContent = s.title;
-    document.title = s.title;
+    document.title = s.title.includes("תום כפר נוער") ? s.title : "תום כפר נוער - " + s.title;
     if (session && !$("voteView").classList.contains("hidden")) {
       if (!s.open) show("closedView"); else renderCands();
     }
